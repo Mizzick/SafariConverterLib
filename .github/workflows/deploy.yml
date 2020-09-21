@@ -16,7 +16,7 @@ jobs:
         run: swift build -v
 
       - name: Test
-        run: swift test -v -c release
+        run: swift test -v
 
       - name: Create Release
         id: create_release
