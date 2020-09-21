@@ -18,13 +18,8 @@ jobs:
       - name: Test
         run: swift test -v
 
-      - name: Build
+      - name: Build Release Binary
         run: swift build -v -c release
-
-      - name: List
-        run: ls -la .build/
-      - name: List builds
-        run: ls -la .build/release/
 
       - name: Create Release
         id: create_release
@@ -35,7 +30,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
           body: |
-            Updated converter
+            - Updated converter binary
           draft: false
           prerelease: false
 
