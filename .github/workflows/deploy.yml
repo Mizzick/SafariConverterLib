@@ -26,6 +26,8 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
+          body: |
+            Updated converter
           draft: false
           prerelease: false
 
@@ -36,7 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .build/release/ConverterTool
+          asset_path: ./.build/release/ConverterTool
           asset_name: ConverterTool
           asset_content_type: application/macbinary
 
