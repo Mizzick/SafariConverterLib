@@ -20,7 +20,7 @@ jobs:
 
       - name: Archive
         run: |
-          zip --junk-paths ConverterTool.zip .build/release/ConverterTool
+          zip --junk-paths .build/release/ConverterTool ConverterTool.zip
 
       - name: Create Release
         id: create_release
