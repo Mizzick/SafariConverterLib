@@ -18,8 +18,11 @@ jobs:
       - name: Test
         run: swift test -v
 
+      - name: Build
+        run: swift build -v -c release
+
       - name: List
-        run: ls -la
+        run: ls -la .build/
       - name: List builds
         run: ls -la .build/release/
 
