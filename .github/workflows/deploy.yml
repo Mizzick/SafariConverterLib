@@ -18,6 +18,10 @@ jobs:
       - name: Test
         run: swift test -v
 
+      - name: Archive
+        run: |
+          zip --junk-paths ConverterTool.zip .build/release/ConverterTool
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -38,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./.build/release/ConverterTool
+          asset_path: ./ConverterTool.zip
           asset_name: ConverterTool
           asset_content_type: application/macbinary
 
