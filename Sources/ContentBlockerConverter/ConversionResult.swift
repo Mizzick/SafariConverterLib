@@ -1,5 +1,4 @@
 import Foundation
-
 /**
  * Conversion result wrapper class
  */
@@ -39,7 +38,12 @@ public struct ConversionResult: Encodable {
      */
     public var advancedBlocking: String? = nil;
     
-    init(entries: [BlockerEntry], advBlockingEntries: [BlockerEntry] = [], limit: Int, errorsCount: Int) throws {
+    /**
+     * Result message
+     */
+    public var message: String;
+    
+    init(entries: [BlockerEntry], advBlockingEntries: [BlockerEntry] = [], limit: Int, errorsCount: Int, message: String) throws {
         self.totalConvertedCount = entries.count;
         
         self.overLimit = (limit > 0 && entries.count > limit);
@@ -59,13 +63,12 @@ public struct ConversionResult: Encodable {
             self.advancedBlockingConvertedCount = advBlockingEntries.count;
             self.advancedBlocking = try ConversionResult.createJSONString(entries: advBlockingEntries);
         }
+        
+        self.message = message;
     }
     
     private static func createJSONString(entries: [BlockerEntry]) throws -> String {
-        let encoder = JSONEncoder();
-        encoder.outputFormatting = .prettyPrinted
-        
-        let json = try encoder.encode(entries);
-        return String(data: json, encoding: .utf8)!.replacingOccurrences(of: "\\/", with: "/");
+        let encoder = BlockerEntryEncoder();
+        return encoder.encode(entries: entries);
     }
 }

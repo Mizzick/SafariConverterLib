@@ -29,7 +29,7 @@ final class ContentBlockerConverterTests: XCTestCase {
         XCTAssertEqual(result?.convertedCount, 0);
         XCTAssertEqual(result?.errorsCount, 0);
         XCTAssertEqual(result?.overLimit, false);
-        XCTAssertEqual(result?.converted, "[\n\n]");
+        XCTAssertEqual(result?.converted, "[]");
     }
     
     func testConvertComment() {
@@ -39,7 +39,7 @@ final class ContentBlockerConverterTests: XCTestCase {
         XCTAssertEqual(result?.convertedCount, 0);
         XCTAssertEqual(result?.errorsCount, 0);
         XCTAssertEqual(result?.overLimit, false);
-        XCTAssertEqual(result?.converted, "[\n\n]");
+        XCTAssertEqual(result?.converted, "[]");
     }
     
     func testConvertNetworkRule() {
@@ -49,7 +49,7 @@ final class ContentBlockerConverterTests: XCTestCase {
         XCTAssertEqual(result?.convertedCount, 0);
         // XCTAssertEqual(result?.errorsCount, 1);
         XCTAssertEqual(result?.overLimit, false);
-        XCTAssertEqual(result?.converted, "[\n\n]");
+        XCTAssertEqual(result?.converted, "[]");
     }
     
     func testPopupRules() {
@@ -65,7 +65,7 @@ final class ContentBlockerConverterTests: XCTestCase {
         XCTAssertEqual(result?.convertedCount, 3);
         XCTAssertEqual(result?.errorsCount, 0);
         
-        let decoded = try! parseJsonString(json: result!.converted);
+        var decoded = try! parseJsonString(json: result!.converted);
         XCTAssertEqual(decoded.count, 3);
 
         XCTAssertEqual(decoded[0].trigger.urlFilter, START_URL_UNESCAPED + "example1\\.com");
@@ -83,123 +83,72 @@ final class ContentBlockerConverterTests: XCTestCase {
         // conversion of $document rule
         ruleText = ["||example.com$document"];
         result = converter.convertArray(rules: ruleText);
-        var expected = """
-        [
-          {
-            "trigger" : {
-              "url-filter" : "\(URL_FILTER_REGEXP_START_URL)example\\\\.com",
-              "resource-type" : [
-                "document"
-              ]
-            },
-            "action" : {
-              "type" : "block"
-            }
-          }
-        ]
-        """
+        
         XCTAssertEqual(result?.totalConvertedCount, 1);
         XCTAssertEqual(result?.convertedCount, 1);
         XCTAssertEqual(result?.errorsCount, 0);
-        XCTAssertEqual(result?.converted, expected);
+        
+        decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded[0].trigger.urlFilter, "\(START_URL_UNESCAPED)example\\.com");
+        XCTAssertEqual(decoded[0].trigger.resourceType, ["document"]);
+        XCTAssertEqual(decoded[0].action.type, "block");
+        
         
         // conversion of $document and $popup rule
         ruleText = ["||test.com$document,popup"];
         result = converter.convertArray(rules: ruleText);
-        expected = """
-        [
-          {
-            "trigger" : {
-              "url-filter" : "\(URL_FILTER_REGEXP_START_URL)test\\\\.com",
-              "resource-type" : [
-                "document"
-              ]
-            },
-            "action" : {
-              "type" : "block"
-            }
-          }
-        ]
-        """
+
         XCTAssertEqual(result?.totalConvertedCount, 1);
         XCTAssertEqual(result?.convertedCount, 1);
         XCTAssertEqual(result?.errorsCount, 0);
-        XCTAssertEqual(result?.converted, expected);
+        
+        decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded[0].trigger.urlFilter, "\(START_URL_UNESCAPED)test\\.com");
+        XCTAssertEqual(decoded[0].trigger.resourceType, ["document"]);
+        XCTAssertEqual(decoded[0].action.type, "block");
+        
         
         // conversion of $popup rule
         ruleText = ["||example.com^$popup"];
         result = converter.convertArray(rules: ruleText);
-        expected = """
-        [
-          {
-            "trigger" : {
-              "url-filter" : "\(URL_FILTER_REGEXP_START_URL)example\\\\.com[/:&?]?",
-              "resource-type" : [
-                "document"
-              ]
-            },
-            "action" : {
-              "type" : "block"
-            }
-          }
-        ]
-        """
+        
         XCTAssertEqual(result?.totalConvertedCount, 1);
         XCTAssertEqual(result?.convertedCount, 1);
         XCTAssertEqual(result?.errorsCount, 0);
-        XCTAssertEqual(result?.converted, expected);
+        
+        decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded[0].trigger.urlFilter, "\(START_URL_UNESCAPED)example\\.com[/:&?]?");
+        XCTAssertEqual(decoded[0].trigger.resourceType, ["document"]);
+        XCTAssertEqual(decoded[0].action.type, "block");
 
+        
         // conversion of $popup and third-party rule
         ruleText = ["||getsecuredfiles.com^$popup,third-party"];
         result = converter.convertArray(rules: ruleText);
-        expected = """
-        [
-          {
-            "trigger" : {
-              "url-filter" : "\(URL_FILTER_REGEXP_START_URL)getsecuredfiles\\\\.com[/:&?]?",
-              "load-type" : [
-                "third-party"
-              ],
-              "resource-type" : [
-                "document"
-              ]
-            },
-            "action" : {
-              "type" : "block"
-            }
-          }
-        ]
-        """
+        
         XCTAssertEqual(result?.totalConvertedCount, 1);
         XCTAssertEqual(result?.convertedCount, 1);
         XCTAssertEqual(result?.errorsCount, 0);
-        XCTAssertEqual(result?.converted, expected);
+        
+        decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded[0].trigger.urlFilter, "\(START_URL_UNESCAPED)getsecuredfiles\\.com[/:&?]?");
+        XCTAssertEqual(decoded[0].trigger.resourceType, ["document"]);
+        XCTAssertEqual(decoded[0].trigger.loadType, ["third-party"]);
+        XCTAssertEqual(decoded[0].action.type, "block");
     }
     
     func testConvertFirstPartyRule() {
         let result = converter.convertArray(rules: ["@@||adriver.ru^$~third-party"]);
         
-        let expected = """
-        [
-          {
-            "trigger" : {
-              "url-filter" : "\(URL_FILTER_REGEXP_START_URL)adriver\\\\.ru[/:&?]?",
-              "load-type" : [
-                "first-party"
-              ]
-            },
-            "action" : {
-              "type" : "ignore-previous-rules"
-            }
-          }
-        ]
-        """
-        // print("\(result?.converted)")
-        XCTAssertEqual(result?.converted, expected);
         XCTAssertEqual(result?.totalConvertedCount, 1);
         XCTAssertEqual(result?.convertedCount, 1);
         XCTAssertEqual(result?.errorsCount, 0);
         XCTAssertEqual(result?.overLimit, false);
+        
+        let decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded[0].trigger.urlFilter, "\(START_URL_UNESCAPED)adriver\\.ru[/:&?]?");
+        XCTAssertEqual(decoded[0].trigger.loadType, ["first-party"]);
+        XCTAssertEqual(decoded[0].action.type, "ignore-previous-rules");
     }
     
     func testConvertWebsocketRules() {
@@ -376,6 +325,23 @@ final class ContentBlockerConverterTests: XCTestCase {
         XCTAssertEqual(decoded[1].action.type, "ignore-previous-rules");
     }
     
+    func testConvertCompactDomainSensitiveElemhide() {
+        let result = converter.convertArray(rules: [
+            "example.org###selector-one",
+            "example.org###selector-two",
+            "example.org###selector-three"
+        ]);
+        XCTAssertEqual(result?.convertedCount, 1);
+        
+        let decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded.count, 1);
+        
+        XCTAssertEqual(decoded[0].trigger.urlFilter, URL_FILTER_CSS_RULES);
+        XCTAssertEqual(decoded[0].trigger.ifDomain, ["*example.org"]);
+        XCTAssertEqual(decoded[0].action.type, "css-display-none");
+        XCTAssertEqual(decoded[0].action.selector, "#selector-one, #selector-two, #selector-three");
+    }
+    
     func testCyrillicRules() {
         let result = converter.convertArray(rules: ["меил.рф", "||меил.рф"]);
         XCTAssertEqual(result?.convertedCount, 2);
@@ -416,10 +382,10 @@ final class ContentBlockerConverterTests: XCTestCase {
     
     func testCssPseudoClasses() {
         let result = converter.convertArray(rules: [
-                "w3schools.com###main > table.w3-table-all.notranslate:first-child > tbody > tr:nth-child(17) > td.notranslate:nth-child(2)",
-                "w3schools.com###:root div.ads",
-                "w3schools.com###body div[attr='test']:first-child  div",
-                "w3schools.com##.todaystripe::after"
+                "w3schools1.com###main > table.w3-table-all.notranslate:first-child > tbody > tr:nth-child(17) > td.notranslate:nth-child(2)",
+                "w3schools2.com###:root div.ads",
+                "w3schools3.com###body div[attr='test']:first-child  div",
+                "w3schools4.com##.todaystripe::after"
             ]
         );
         XCTAssertEqual(result?.convertedCount, 4);
@@ -551,7 +517,126 @@ final class ContentBlockerConverterTests: XCTestCase {
         XCTAssertEqual(decoded[0].trigger.ifDomain?[2], "*forbes.ru");
         XCTAssertEqual(decoded[0].trigger.ifDomain?[99], "*forbes.sh");
     }
-                
+
+    func testUboScriptletRules() {
+        let ruleText = [
+            "example.org##+js(aopr,__cad.cpm_popunder)",
+            "example.org##+js(acis,setTimeout,testad)",
+        ];
+
+        let result = converter.convertArray(rules: ruleText, advancedBlocking: true);
+        XCTAssertEqual(result?.errorsCount, 0);
+
+        let decoded = try! parseJsonString(json: result!.advancedBlocking!);
+        XCTAssertEqual(decoded.count, 2);
+
+        XCTAssertEqual(decoded[0].trigger.ifDomain?[0], "*example.org");
+        XCTAssertEqual(decoded[0].action.type, "scriptlet");
+        XCTAssertEqual(decoded[0].action.scriptlet, "ubo-aopr");
+        XCTAssertEqual(decoded[0].action.scriptletParam, #"{"name":"ubo-aopr","args":["__cad.cpm_popunder"]}"#);
+
+        XCTAssertEqual(decoded[1].trigger.ifDomain?[0], "*example.org");
+        XCTAssertEqual(decoded[1].action.type, "scriptlet");
+        XCTAssertEqual(decoded[1].action.scriptlet, "ubo-acis");
+        XCTAssertEqual(decoded[1].action.scriptletParam, #"{"name":"ubo-acis","args":["setTimeout","testad"]}"#);
+    }
+    
+    func testInvalidRegexpRules() {
+        let ruleText = [
+            #"/([0-9]{1,3}\.){3}[0-9]{1,3}.\/proxy$/$script,websocket,third-party"#
+        ];
+
+        let result = converter.convertArray(rules: ruleText);
+        XCTAssertEqual(result?.errorsCount, 1);
+        XCTAssertEqual(result?.convertedCount, 0);
+    }
+    
+    func testCollisionCssAndScriptRules() {
+        let ruleText = [
+            "example.org##body",
+            "example.org#%#alert('1');",
+        ];
+
+        let result = converter.convertArray(rules: ruleText);
+        XCTAssertEqual(result?.errorsCount, 0);
+        XCTAssertEqual(result?.convertedCount, 1);
+        
+        let decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded.count, 1);
+        XCTAssertEqual(decoded[0].action.type, "css-display-none");
+        XCTAssertEqual(decoded[0].action.selector, "body");
+        XCTAssertEqual(decoded[0].trigger.urlFilter, ".*");
+        XCTAssertEqual(decoded[0].trigger.ifDomain?[0], "*example.org");
+    }
+    
+    func testCollisionCssAndScriptletRules() {
+        let ruleText = [
+            "example.org##body",
+            "example.org#%#//scriptlet('abort-on-property-read', 'I10C')",
+        ];
+
+        let result = converter.convertArray(rules: ruleText);
+        XCTAssertEqual(result?.errorsCount, 0);
+        XCTAssertEqual(result?.convertedCount, 1);
+        
+        let decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded.count, 1);
+        XCTAssertEqual(decoded[0].action.type, "css-display-none");
+        XCTAssertEqual(decoded[0].action.selector, "body");
+        XCTAssertEqual(decoded[0].trigger.urlFilter, ".*");
+        XCTAssertEqual(decoded[0].trigger.ifDomain?[0], "*example.org");
+    }
+    
+    func testCollisionCssAndScriptRulesAdvancedBlocking() {
+        let ruleText = [
+            "example.org##body",
+            "example.org#%#alert('1');",
+        ];
+
+        let result = converter.convertArray(rules: ruleText, advancedBlocking: true);
+        XCTAssertEqual(result?.errorsCount, 0);
+        XCTAssertEqual(result?.convertedCount, 1);
+        
+        let decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded.count, 1);
+        XCTAssertEqual(decoded[0].action.type, "css-display-none");
+        XCTAssertEqual(decoded[0].action.selector, "body");
+        XCTAssertEqual(decoded[0].trigger.urlFilter, ".*");
+        XCTAssertEqual(decoded[0].trigger.ifDomain?[0], "*example.org");
+        
+        let decodedAdvBlocking = try! parseJsonString(json: result!.advancedBlocking!);
+        XCTAssertEqual(decodedAdvBlocking.count, 1);
+
+        XCTAssertEqual(decodedAdvBlocking[0].trigger.ifDomain?[0], "*example.org");
+        XCTAssertEqual(decodedAdvBlocking[0].action.type, "script");
+        XCTAssertEqual(decodedAdvBlocking[0].action.script, "alert(\'1\');");
+    }
+    
+    func testCollisionCssAndScriptletRulesAdvancedBlocking() {
+        let ruleText = [
+            "example.org##body",
+            "example.org#%#//scriptlet('abort-on-property-read', 'I10C')",
+        ];
+
+        let result = converter.convertArray(rules: ruleText, advancedBlocking: true);
+        XCTAssertEqual(result?.errorsCount, 0);
+        XCTAssertEqual(result?.convertedCount, 1);
+        
+        let decoded = try! parseJsonString(json: result!.converted);
+        XCTAssertEqual(decoded.count, 1);
+        XCTAssertEqual(decoded[0].action.type, "css-display-none");
+        XCTAssertEqual(decoded[0].action.selector, "body");
+        XCTAssertEqual(decoded[0].trigger.urlFilter, ".*");
+        XCTAssertEqual(decoded[0].trigger.ifDomain?[0], "*example.org");
+        
+        let decodedAdvBlocking = try! parseJsonString(json: result!.advancedBlocking!);
+        XCTAssertEqual(decodedAdvBlocking.count, 1);
+
+        XCTAssertEqual(decodedAdvBlocking[0].trigger.ifDomain?[0], "*example.org");
+        XCTAssertEqual(decodedAdvBlocking[0].action.scriptlet, "abort-on-property-read");
+        XCTAssertEqual(decodedAdvBlocking[0].action.scriptletParam, "{\"name\":\"abort-on-property-read\",\"args\":[\"I10C\"]}");
+    }
+
     static var allTests = [
         ("testEmpty", testEmpty),
         ("testConvertComment", testConvertComment),
@@ -569,6 +654,7 @@ final class ContentBlockerConverterTests: XCTestCase {
         ("testConvertGenericDomainSensitiveSortingOrder", testConvertGenericDomainSensitiveSortingOrder),
         ("testConvertGenericDomainSensitiveSortingOrderGenerichide", testConvertGenericDomainSensitiveSortingOrderGenerichide),
         ("testConvertGenericDomainSensitiveSortingOrderElemhide", testConvertGenericDomainSensitiveSortingOrderElemhide),
+        ("testConvertCompactDomainSensitiveElemhide", testConvertCompactDomainSensitiveElemhide),
         ("testCyrillicRules", testCyrillicRules),
         ("testRegexRules", testRegexRules),
         ("testCssPseudoClasses", testCssPseudoClasses),
@@ -578,5 +664,11 @@ final class ContentBlockerConverterTests: XCTestCase {
         ("testImportantModifierRules", testImportantModifierRules),
         ("testBadfilterRules", testBadfilterRules),
         ("testTldWildcardRules", testTldWildcardRules),
+        ("testUboScriptletRules", testUboScriptletRules),
+        ("testInvalidRegexpRules", testInvalidRegexpRules),
+        ("testCollisionCssAndScriptRules", testCollisionCssAndScriptRules),
+        ("testCollisionCssAndScriptletRules", testCollisionCssAndScriptletRules),
+        ("testCollisionCssAndScriptRulesAdvancedBlocking", testCollisionCssAndScriptRulesAdvancedBlocking),
+        ("testCollisionCssAndScriptletRulesAdvancedBlocking", testCollisionCssAndScriptletRulesAdvancedBlocking),
     ]
 }

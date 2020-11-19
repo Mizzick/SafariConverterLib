@@ -39,10 +39,17 @@ The result contains following properties:
 ### How to use converter from command line:
 
 ```
-    ./ConverterTool -limit=0 -optimize=true -advancedBlocking=false
+    ./ConverterTool -limit=0 -optimize=true -advancedBlocking=false <<STDIN -o other --options
+    test_rule_one
+    test_rule_two
+    STDIN
 ```
 
 The tool then reads stdin line by line for rule until an empty line.
+
+### How to release on Github
+
+Push a new tag in `v*.*.*` format, then provided github action is intended to build and publish new release with an asset binary.
 
 ### Supported AdGuard rules types:
 
@@ -59,5 +66,5 @@ The tool then reads stdin line by line for rule until an empty line.
 - Scriptlet rules (#%#//scriptlet)
 - Scriptlet rules exceptions
 
-### Third-party libraries
-- Punycode library (https://github.com/gumob/PunycodeSwift/tree/master/Source)
+### Third-party dependencies
+- Punycode (https://github.com/gumob/PunycodeSwift.git)
